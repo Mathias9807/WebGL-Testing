@@ -10,29 +10,40 @@
 	<canvas id="window"></canvas>
 
 	<script id="frag" type="text/plaintext">
-		precision mediump float;
+precision mediump float;
 
-		// varying vec3 color_out;
+varying vec2 uv;
 
-		void main (void) {
-			gl_FragColor = vec4(1, 0, 0, 1);
-		}
+void main (void) {
+	gl_FragColor = vec4(uv, 0, 1);
+	// gl_FragColor = vec4(1, 0, 0, 1);
+}
 	</script>
 
 	<script id="vert" type="text/plaintext">
-		attribute vec3 vertex_in;
-		// attribute vec3 color_in;
+attribute vec3 vertex_in;
+attribute vec2 uv_in;
 
-		// varying vec3 color_out;
+varying vec2 uv;
 
-		void main(void) {
-			gl_Position = vec4(vertex_in / vec3(1.5), 1);
-			// color_out = color_in;
-		}
+void main(void) {
+	float a = 15.0 / 180.0 * 3.14159;
+	mat4 rot = mat4(
+		vec4(1,		0,	0,	0),
+		vec4(0,		cos(a),	-sin(a),	0),
+		vec4(0,		sin(a),	cos(a),	0),
+		vec4(0,		0,	0,	1)
+	);
+
+	gl_Position = rot * vec4(vertex_in / vec3(2), 1);
+	uv = uv_in;
+}
 	</script>
 
 	<script type="text/javascript"
 		src="{{ url_for('static', filename='projects/webgl/model.js') }}"></script>
+	<script type="text/javascript"
+		src="{{ url_for('static', filename='projects/webgl/render.js') }}"></script>
 	<script type="text/javascript"
 		src="{{ url_for('static', filename='projects/webgl/script.js') }}"></script>
 </body>

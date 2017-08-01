@@ -6,6 +6,7 @@ class Model {
 		this.verts = [];
 		this.vao = 0;
 		this.vertLength = 0;
+		this.ready = false;
 
 		// Download the model
 		var xhttp = new XMLHttpRequest();
@@ -21,6 +22,7 @@ class Model {
 
 	parseOBJ(data) {
 		var verts = [];
+		var uvs = [];
 
 		var lines = data.split('\n');
 		for (var i = 0; i < lines.length; i++) {
@@ -33,8 +35,17 @@ class Model {
 				verts.push(parseFloat(v[2]));
 				verts.push(parseFloat(v[3]));
 			}
+
+			if (line.substring(0, 2) == 'vt') {
+				var v = line.split(" ");
+
+				uvs.push(parseFloat(v[1]));
+				uvs.push(parseFloat(v[2]));
+			}
 		}
 
+		// Vertex = {x, y, z, u, v}
+		var indicesPerVertex = 5;
 		var unwrappedVerts = [];
 		for (var i = 0; i < lines.length; i++) {
 			var line = lines[i];
@@ -47,23 +58,34 @@ class Model {
 				var i1 = f[2].split("/")[0] - 1;
 				var i2 = f[3].split("/")[0] - 1;
 
-				for (var j = 0; j < 3; j++)
+				// Add first vertex info
+				for (var j = 0; j < 3; j++) {
 					unwrappedVerts.push(verts[j + 3 * i0]);
+				}
+				for (var j = 0; j < 2; j++) {
+					unwrappedVerts.push(uvs[j + 2 * i0]);
+				}
 
-				for (var j = 0; j < 3; j++)
+				// Add second vertex info
+				for (var j = 0; j < 3; j++) {
 					unwrappedVerts.push(verts[j + 3 * i1]);
+				}
+				for (var j = 0; j < 2; j++) {
+					unwrappedVerts.push(uvs[j + 2 * i1]);
+				}
 
-				for (var j = 0; j < 3; j++)
+				// Add third vertex info
+				for (var j = 0; j < 3; j++) {
 					unwrappedVerts.push(verts[j + 3 * i2]);
+				}
+				for (var j = 0; j < 2; j++) {
+					unwrappedVerts.push(uvs[j + 2 * i2]);
+				}
 			}
 		}
 
-		// var vertArray = new Float32Array([-1, -1, 0, 1, -1, 0, 0, 1, 0]);
-		// var colArray = new Float32Array([1, 0, 0, 0, 1, 0, 1, 0, 1]);
-		// var indexArray = new Uint8Array([0, 1, 2]);
-
 		var vertArray = new Float32Array(unwrappedVerts);
-		this.vertLength = unwrappedVerts.length;
+		this.vertLength = unwrappedVerts.length / indicesPerVertex;
 
 		this.vao = gl.createVertexArray();
 		gl.bindVertexArray(this.vao);
@@ -71,26 +93,28 @@ class Model {
 		var buffer0 = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, buffer0);
 		gl.bufferData(gl.ARRAY_BUFFER, vertArray.buffer, gl.STATIC_DRAW);
-		gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+
+		gl.vertexAttribPointer(0, 3, gl.FLOAT, false,
+			indicesPerVertex * 4, 0);
 		gl.enableVertexAttribArray(0);
 
-		// var buffer1 = gl.createBuffer();
-		// gl.bindBuffer(gl.ARRAY_BUFFER, buffer1);
-		// gl.bufferData(gl.ARRAY_BUFFER, colArray.buffer, gl.STATIC_DRAW);
-		// gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
-		// gl.enableVertexAttribArray(1);
+		gl.vertexAttribPointer(1, 2, gl.FLOAT, false,
+			indicesPerVertex * 4, 3 * 4);
+		gl.enableVertexAttribArray(1);
 
-		// var bufferI = gl.createBuffer();
-		// gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, bufferI);
-		// gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexArray.buffer, gl.STATIC_DRAW);
-
-		this.doneCallback();
+		this.ready = true;
+		if (typeof this.doneCallback === "function")
+			this.doneCallback();
 	}
 
 	render() {
-		gl.bindVertexArray(this.vao);
+		if (this.ready === false) return;
 
-		gl.drawArrays(gl.TRIANGLES, 0, this.vertLength / 3);
+		gl.bindVertexArray(this.vao);
+		gl.enableVertexAttribArray(0);
+		gl.enableVertexAttribArray(1);
+
+		gl.drawArrays(gl.TRIANGLES, 0, this.vertLength);
 	}
 
 }
