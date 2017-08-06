@@ -26,20 +26,17 @@ attribute vec2 uv_in;
 
 varying vec2 uv;
 
-void main(void) {
-	float a = 15.0 / 180.0 * 3.14159;
-	mat4 rot = mat4(
-		vec4(1,		0,	0,	0),
-		vec4(0,		cos(a),	-sin(a),	0),
-		vec4(0,		sin(a),	cos(a),	0),
-		vec4(0,		0,	0,	1)
-	);
+uniform mat4 mat_proj, mat_world, mat_model;
 
-	gl_Position = rot * vec4(vertex_in / vec3(2), 1);
+void main(void) {
+	gl_Position = mat_proj * mat_world * mat_model * vec4(vertex_in, 1);
+
 	uv = uv_in;
 }
 	</script>
 
+	<script type="text/javascript"
+		src="{{ url_for('static', filename='projects/webgl/gl-matrix.js') }}"></script>
 	<script type="text/javascript"
 		src="{{ url_for('static', filename='projects/webgl/model.js') }}"></script>
 	<script type="text/javascript"
